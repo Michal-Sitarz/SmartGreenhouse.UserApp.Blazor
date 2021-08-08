@@ -1,5 +1,8 @@
 ﻿@page "/"
 
+@using SmartGreenhouse.UserApp.Blazor.JsInterop;
+@inject MqttJsInterop mqtt
+
 <h1>Smart Greenhouse System</h1>
 
 <hr />
@@ -8,6 +11,26 @@
     <div class="col-6">
         <h5>Current conditions</h5>
         <hr />
+
+
+        @if (mqttData == null && mqttData?.Count != 0)
+        {
+            <p>MQTT message broker: <strong>@ConnectionStatus</strong> - <em>Awaiting data...</em> </p>
+        }
+        else
+        {
+            <table class="table">
+                <tbody>
+                    @foreach (var data in mqttData)
+                    {
+                        <tr>
+                            <td width="100px">@data.Received</td>
+                            <td>@data.Data</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
 
     </div>
 
@@ -18,3 +41,91 @@
     </div>
 
 </div>
+
+<hr />
+
+
+@code {
+    private const string _mqttHost = "192.168.1.98";
+    private const int _mqttPort = 1883;
+    private const string _topic = "greenhouse/averageconditions";
+
+    private List<PayloadData> mqttData { get; set; }
+
+    protected string ConnectionStatus { get; set; }
+    protected string ClientName { get; set; } = $"UserApp-Blazor";
+    protected bool IsDisabled { get; set; }
+    protected string Message { get; set; }
+
+
+    protected override void OnInitialized()
+    {
+        ConnectionStatus = "Not connected";
+
+        SmartGreenhouse.UserApp.Blazor.JsInterop.OnConnectionChanged.Action = value =>
+        {
+            ConnectionStatus = $"{value}";
+            this.StateHasChanged();
+        };
+
+
+        SmartGreenhouse.UserApp.Blazor.JsInterop.OnMessageReceived.Action = (key, data) =>
+        {
+            if (mqttData == null)
+            {
+                mqttData = new List<PayloadData>();
+            }
+
+            var rabbitDataItem = new PayloadData(key, data);
+            mqttData.Insert(0, rabbitDataItem);
+
+            this.StateHasChanged();
+        };
+
+        // connect
+        mqtt.CreateClient(wsHost: _mqttHost, wsPort: _mqttPort, clientId: ClientName);
+        mqtt.Connect(topic: _topic, qos: 1, timeout: 3);
+
+    }
+
+    public void CreateClientAndConnect()
+    {
+        IsDisabled = true;
+        this.StateHasChanged();
+
+        mqtt.CreateClient(wsHost: _mqttHost, wsPort: _mqttPort, clientId: ClientName);
+        mqtt.Connect(topic: _topic, qos: 1, timeout: 3);
+    }
+
+    public void Disconnect()
+    {
+        mqtt.Disconnect();
+        IsDisabled = false;
+        this.StateHasChanged();
+    }
+
+    public void PublishMessage()
+    {
+        if (!string.IsNullOrWhiteSpace(Message))
+        {
+            string payload = $"{ClientName} : {Message}";
+            mqtt.Publish(topic: _topic, payload: payload, qos: 0, retained: false);
+            Message = null;
+            this.StateHasChanged();
+        }
+    }
+
+    class PayloadData
+    {
+        public string Key { get; set; }
+        public string Data { get; set; }
+        public string Received { get; set; }
+
+        public PayloadData(string key, string data)
+        {
+            this.Key = key;
+            this.Data = data;
+            this.Received = DateTime.Now.ToString("HH:mm:ss");
+        }
+    }
+}
