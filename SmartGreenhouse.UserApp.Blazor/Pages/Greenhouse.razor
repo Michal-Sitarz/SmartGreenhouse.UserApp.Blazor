@@ -1,0 +1,69 @@
+﻿@page "/manage-greenhouse"
+@inject HttpClient Http
+
+<h3>Manage Greenhouse</h3>
+<hr />
+
+<h5>Historical Data</h5>
+
+@if (readings == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Air Temperature (°C)</th>
+                <th>Air Humidity (%)</th>
+                <th>Soil Moisture (%)</th>
+                <th>Light Intensity</th>
+                <th>Date/Time</th>
+                <th>Sensor ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in readings)
+            {
+                <tr>
+                    <td>@r.AirTemperature</td>
+                    <td>@r.AirHumidity</td>
+                    <td>@r.SoilMoisture</td>
+                    <td>@r.LightIntensity</td>
+                    <td>@r.TimeStamp.ToString()</td>
+                    <td>@r.SensorNodeId</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private ConditionsReading[] readings;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            readings = await Http.GetFromJsonAsync<ConditionsReading[]>("sample-data/greenhouse.json");
+            //readings = await Http.GetFromJsonAsync<ConditionsReading[]>("http://192.168.1.132:8888/api/conditionsreadings");
+
+        }
+        catch (Exception)
+        {
+
+        }
+    }
+
+    public class ConditionsReading
+    {
+        public int Id { get; set; }
+        public double AirTemperature { get; set; }
+        public double AirHumidity { get; set; }
+        public double SoilMoisture { get; set; }
+        public int LightIntensity { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public string SensorNodeId { get; set; }
+    }
+}

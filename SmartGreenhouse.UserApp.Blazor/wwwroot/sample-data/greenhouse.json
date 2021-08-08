@@ -1,0 +1,29 @@
+[
+	{
+		"id": 1,
+		"airTemperature": 25,
+		"airHumidity": 59,
+		"soilMoisture": 0,
+		"lightIntensity": 0,
+		"timeStamp": "0001-01-01T00:00:00",
+		"sensorNodeId": "arduino1"
+	}, 
+	{
+		"id": 2,
+		"airTemperature": 25,
+		"airHumidity": 59,
+		"soilMoisture": 0,
+		"lightIntensity": 0,
+		"timeStamp": "0001-01-01T00:00:00",
+		"sensorNodeId": "arduino1"
+	}, 
+	{
+		"id": 3,
+		"airTemperature": 30,
+		"airHumidity": 60,
+		"soilMoisture": 0,
+		"lightIntensity": 0,
+		"timeStamp": "0001-01-01T00:00:00",
+		"sensorNodeId": "arduino1"
+	}
+]
